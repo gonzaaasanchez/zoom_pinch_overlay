@@ -54,6 +54,7 @@ class ZoomOverlay extends StatefulWidget {
     this.modalBarrierColor,
     this.onScaleStart,
     this.onScaleStop,
+    this.onTouchCountChanged,
   }) : super(key: key);
 
   /// A widget to make zoomable.
@@ -87,12 +88,15 @@ class ZoomOverlay extends StatefulWidget {
   final VoidCallback? onScaleStart;
   final VoidCallback? onScaleStop;
 
+  /// callback when the touch pointer changes
+  /// the parameter gives the number of current touch
+  final Function(int)? onTouchCountChanged;
+
   @override
   _ZoomOverlayState createState() => _ZoomOverlayState();
 }
 
-class _ZoomOverlayState extends State<ZoomOverlay>
-    with TickerProviderStateMixin {
+class _ZoomOverlayState extends State<ZoomOverlay> with TickerProviderStateMixin {
   Matrix4? _matrix = Matrix4.identity();
   late Offset _startFocalPoint;
   late Animation<Matrix4> _animationReset;
@@ -195,8 +199,7 @@ class _ZoomOverlayState extends State<ZoomOverlay>
     final dx = (1 - scaleby) * focalPoint.dx;
     final dy = (1 - scaleby) * focalPoint.dy;
 
-    final scale =
-        Matrix4(scaleby, 0, 0, 0, 0, scaleby, 0, 0, 0, 0, 1, 0, dx, dy, 0, 1);
+    final scale = Matrix4(scaleby, 0, 0, 0, 0, scaleby, 0, 0, 0, 0, 1, 0, dx, dy, 0, 1);
 
     _matrix = translate * scale;
 
@@ -260,7 +263,13 @@ class _ZoomOverlayState extends State<ZoomOverlay>
     _overlayEntry = null;
   }
 
-  void _incrementEnter(PointerEvent details) => _touchCount++;
+  void _incrementEnter(PointerEvent details) {
+    _touchCount++;
+    widget.onTouchCountChanged?.call(_touchCount);
+  }
 
-  void _incrementExit(PointerEvent details) => _touchCount--;
+  void _incrementExit(PointerEvent details) {
+    _touchCount--;
+    widget.onTouchCountChanged?.call(_touchCount);
+  }
 }
